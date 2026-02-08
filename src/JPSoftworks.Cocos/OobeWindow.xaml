@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="JPSoftworks.Cocos.OobeWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <ScrollViewer>
+        <StackPanel Margin="32" Spacing="16">
+            <Image Source="ms-appx:///Assets/Wide310x150Logo.scale-200.png"
+                   Stretch="Uniform"
+                   Height="140" />
+            <TextBlock FontSize="28"
+                       Style="{StaticResource MyLabel}"
+                       Text="Welcome to Sticky Companion" />
+            <TextBlock FontSize="16"
+                       TextWrapping="Wrap"
+                       Text="Sticky Companion lives in your system tray and lets you attach quick notes to the window you are focused on, keeping context while you work." />
+            <TextBlock FontSize="18"
+                       FontWeight="SemiBold"
+                       Text="Hotkeys" />
+            <StackPanel Spacing="6">
+                <TextBlock Text="- Win+Shift+K: Create or summon a companion note" />
+                <TextBlock Text="- Win+Shift+J: Open the notes tab for the active companion" />
+                <TextBlock Text="- Ctrl+Tab: Switch between chat and notes" />
+                <TextBlock Text="- Ctrl+Enter: Send the prompt" />
+                <TextBlock Text="- Ctrl+Shift+P: Refocus the parent window" />
+                <TextBlock Text="- Ctrl+Shift+C: Copy last assistant result" />
+                <TextBlock Text="- Ctrl+Shift+V: Paste last assistant result" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

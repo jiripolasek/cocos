@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "StickyWindowsCompanion (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "StickyWindowsCompanion (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

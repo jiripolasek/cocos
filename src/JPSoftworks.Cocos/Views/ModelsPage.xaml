@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="JPSoftworks.Cocos.Views.ModelsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="using:JPSoftworks.Cocos.ViewModels"
+    xmlns:viewModels1="using:JPSoftworks.Cocos.ViewModels"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModels1:ModelsViewModel}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="1">
+            <Grid Padding="16">
+                <StackPanel
+                    MaxWidth="1000"
+                    Spacing="{StaticResource SettingsCardSpacing}">
+                    <TextBlock
+                        FontSize="28"
+                        FontWeight="SemiBold"
+                        Text="Models" />
+                    <TextBlock
+                        FontSize="14"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="Configure the default model and system prompt used by companion notes." />
+
+                    <TextBlock
+                        Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                        Text="Default model" />
+                    <controls:SettingsCard
+                        Header="Default model"
+                        Description="Default model for new companion windows.">
+                        <ComboBox
+                            MinWidth="220"
+                            DisplayMemberPath="DisplayName"
+                            ItemsSource="{Binding DefaultModelOptions}"
+                            SelectedItem="{Binding SelectedDefaultModel, Mode=TwoWay}" />
+                    </controls:SettingsCard>
+
+                    <TextBlock
+                        Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                        Text="Ollama" />
+                    <controls:SettingsExpander
+                        Header="Ollama settings"
+                        IsExpanded="True">
+                        <controls:SettingsExpander.Items>
+                            <controls:SettingsCard
+                                Header="Endpoint"
+                                Description="Base URL for the Ollama server (e.g. http://localhost:11434).">
+                                <TextBox Text="{Binding OllamaEndpoint, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </controls:SettingsCard>
+                            <controls:SettingsCard
+                                Header="Model"
+                                Description="Ollama model name to use.">
+                                <TextBox Text="{Binding OllamaModel, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </controls:SettingsCard>
+                        </controls:SettingsExpander.Items>
+                    </controls:SettingsExpander>
+
+                    <TextBlock
+                        Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                        Text="OpenAI" />
+                    <controls:SettingsExpander
+                        Header="OpenAI / ChatGPT settings"
+                        IsExpanded="False">
+                        <controls:SettingsExpander.Items>
+                            <controls:SettingsCard
+                                Header="Endpoint"
+                                Description="API endpoint for chat completions.">
+                                <TextBox Text="{Binding OpenAiEndpoint, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </controls:SettingsCard>
+                            <controls:SettingsCard
+                                Header="Model"
+                                Description="OpenAI model name to use.">
+                                <TextBox Text="{Binding OpenAiModel, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </controls:SettingsCard>
+                            <controls:SettingsCard
+                                Header="API key"
+                                Description="OpenAI API key used for requests.">
+                                <TextBox Text="{Binding OpenAiApiKey, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </controls:SettingsCard>
+                        </controls:SettingsExpander.Items>
+                    </controls:SettingsExpander>
+
+                    <TextBlock
+                        Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                        Text="System prompt" />
+                    <controls:SettingsCard
+                        Header="System prompt"
+                        Description="Injected as the system message for each request.">
+                        <TextBox
+                            AcceptsReturn="True"
+                            Height="120"
+                            TextWrapping="Wrap"
+                            Text="{Binding SystemPrompt, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                    </controls:SettingsCard>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Page>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="JPSoftworks.Cocos.Views.CompanionAppearancePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:JPSoftworks.Cocos"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="using:JPSoftworks.Cocos.ViewModels"
+    xmlns:viewModels1="using:JPSoftworks.Cocos.ViewModels"
+    xmlns:cocos="using:JPSoftworks.Cocos"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModels1:CompanionAppearanceViewModel}">
+    <Page.Resources>
+        <cocos:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Page.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="1">
+            <Grid Padding="16">
+                <StackPanel
+                    MaxWidth="1000"
+                    Spacing="{StaticResource SettingsCardSpacing}">
+                    <TextBlock
+                        FontSize="28"
+                        FontWeight="SemiBold"
+                        Text="{Binding Title}" />
+                    <TextBlock
+                        FontSize="14"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="{Binding Subtitle}" />
+
+                    <controls:SettingsExpander
+                        Header="Companion appearance"
+                        Description="Pick an emoji and accent color for this companion."
+                        IsExpanded="True"
+                        Visibility="{Binding HasSession, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <controls:SettingsExpander.Items>
+                            <controls:SettingsCard VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                                <ListView
+                                ItemsSource="{Binding Options}"
+                                SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
+                                SelectionMode="Single">
+                                    <ListView.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <ItemsWrapGrid Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ListView.ItemsPanel>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="viewModels1:CompanionAppearanceOptionViewModel">
+                                            <StackPanel
+                                            Width="120"
+                                            Padding="8"
+                                            Spacing="6"
+                                            HorizontalAlignment="Center">
+                                                <Border
+                                                Width="48"
+                                                Height="48"
+                                                CornerRadius="24"
+                                                Background="{x:Bind AccentBrush}" />
+                                                <TextBlock
+                                                FontSize="24"
+                                                HorizontalAlignment="Center"
+                                                Text="{x:Bind Emoji}" />
+                                                <TextBlock
+                                                FontSize="11"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                HorizontalAlignment="Center"
+                                                Text="{x:Bind AccentHex}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </controls:SettingsCard>
+                        </controls:SettingsExpander.Items>
+                    </controls:SettingsExpander>
+
+                    <controls:SettingsCard
+                        Header="No companion selected"
+                        Description="Open a companion window to customize its appearance."
+                        Visibility="{Binding HasSession, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="No active companion context found." />
+                    </controls:SettingsCard>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Page>

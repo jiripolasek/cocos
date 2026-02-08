@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="JPSoftworks.Cocos.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="using:JPSoftworks.Cocos.ViewModels"
+    xmlns:viewModels1="using:JPSoftworks.Cocos.ViewModels"
+    mc:Ignorable="d"
+    d:DataContext="{d:DesignInstance viewModels1:MainViewModel}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="1">
+            <Grid Padding="16">
+                <StackPanel
+                    MaxWidth="1000"
+                    Spacing="{StaticResource SettingsCardSpacing}">
+                    <TextBlock
+                        FontSize="28"
+                        FontWeight="SemiBold"
+                        Text="Sticky Windows Companion" />
+                    <TextBlock
+                        FontSize="14"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"
+                        Text="Tray companion app for spawning sticky notes attached to the active window." />
+
+                    <TextBlock
+                        Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                        Text="Quick actions" />
+                    <controls:SettingsExpander
+                        Header="Companion actions"
+                        IsExpanded="True">
+                        <controls:SettingsExpander.HeaderIcon>
+                            <SymbolIcon Symbol="Setting" />
+                        </controls:SettingsExpander.HeaderIcon>
+                        <controls:SettingsExpander.Items>
+                            <controls:SettingsCard
+                                Header="Create new companion"
+                                Description="Create a new note attached to the active window.">
+                                <controls:SettingsCard.HeaderIcon>
+                                    <SymbolIcon Symbol="Add" />
+                                </controls:SettingsCard.HeaderIcon>
+                                <Button
+                                    Content="New sticky (Win+Shift+K)"
+                                    Command="{Binding CreateNoteCommand}" />
+                            </controls:SettingsCard>
+                            <controls:SettingsCard
+                                Header="Exit app"
+                                Description="Close all companion windows and quit.">
+                                <controls:SettingsCard.HeaderIcon>
+                                    <SymbolIcon Symbol="Cancel" />
+                                </controls:SettingsCard.HeaderIcon>
+                                <Button
+                                    Content="Exit"
+                                    Command="{Binding ExitCommand}" />
+                            </controls:SettingsCard>
+                        </controls:SettingsExpander.Items>
+                    </controls:SettingsExpander>
+
+                    <TextBlock
+                        Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                        Text="Behavior" />
+                    <controls:SettingsCard
+                        Header="Show only one companion window"
+                        Description="Reuse the existing note when creating a new one."
+                        ContentAlignment="Right">
+                        <controls:SettingsCard.HeaderIcon>
+                            <SymbolIcon Symbol="Pin" />
+                        </controls:SettingsCard.HeaderIcon>
+                        <ToggleSwitch IsOn="{Binding SingleWindowMode, Mode=TwoWay}" />
+                    </controls:SettingsCard>
+                    <controls:SettingsCard
+                        Header="Companion corner style"
+                        Description="Choose how window corners are rendered."
+                        ContentAlignment="Right">
+                        <controls:SettingsCard.HeaderIcon>
+                            <SymbolIcon Symbol="Crop" />
+                        </controls:SettingsCard.HeaderIcon>
+                        <ComboBox
+                            MinWidth="180"
+                            DisplayMemberPath="DisplayName"
+                            ItemsSource="{Binding CornerPreferenceOptions}"
+                            SelectedItem="{Binding SelectedCornerPreference, Mode=TwoWay}" />
+                    </controls:SettingsCard>
+
+                    <TextBlock
+                        Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                        Text="Status" />
+                    <controls:SettingsCard
+                        Header="Active companions"
+                        Description="{Binding ActiveNotesText}">
+                        <controls:SettingsCard.HeaderIcon>
+                            <SymbolIcon Symbol="Contact" />
+                        </controls:SettingsCard.HeaderIcon>
+                    </controls:SettingsCard>
+
+                    <TextBlock
+                        Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                        Text="Diagnostics" />
+                    <controls:SettingsCard
+                        Header="Open logs folder"
+                        Description="View the latest diagnostic logs.">
+                        <controls:SettingsCard.HeaderIcon>
+                            <SymbolIcon Symbol="Folder" />
+                        </controls:SettingsCard.HeaderIcon>
+                        <Button
+                            Content="Open folder"
+                            Click="OnOpenLogsClicked" />
+                    </controls:SettingsCard>
+                    <controls:SettingsCard
+                        Header="Tray access"
+                        Description="Use the tray icon to reopen this window.">
+                        <controls:SettingsCard.HeaderIcon>
+                            <SymbolIcon Symbol="Help" />
+                        </controls:SettingsCard.HeaderIcon>
+                    </controls:SettingsCard>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Page>
