@@ -11,7 +11,24 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <!-- Other merged dictionaries here -->
+                <ResourceDictionary Source="ms-appx:///Styles/TextBox.xaml" />
+
+                <ResourceDictionary>
+                    <ResourceDictionary.ThemeDictionaries>
+                        <ResourceDictionary x:Key="Dark">
+                            <AcrylicBrush x:Key="DarkAcrylicFill" TintColor="#DD000000" TintOpacity="0.7" TintLuminosityOpacity="0.7" />
+                            <SolidColorBrush x:Key="DarkAcrylicFillForeground" Color="#FFFFFF" />
+                        </ResourceDictionary>
+                        <ResourceDictionary x:Key="Light">
+                            <AcrylicBrush x:Key="DarkAcrylicFill" TintColor="#DDFFFFFF" TintOpacity="0.7" TintLuminosityOpacity="0.7" />
+                            <SolidColorBrush x:Key="DarkAcrylicFillForeground" Color="#000000" />
+                        </ResourceDictionary>
+                        <ResourceDictionary x:Key="HighContrast">
+                            <AcrylicBrush x:Key="DarkAcrylicFill" TintColor="#FF000000" TintOpacity="0.7" TintLuminosityOpacity="0.7" />
+                            <SolidColorBrush x:Key="DarkAcrylicFillForeground" Color="#FFFFFF" />
+                        </ResourceDictionary>
+                    </ResourceDictionary.ThemeDictionaries>
+                </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
             <Color x:Key="Primary">#512BD4</Color>

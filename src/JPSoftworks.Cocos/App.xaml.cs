@@ -111,7 +111,13 @@ public partial class App : Application
 
     private void OnMainWindowClosed(object sender, WindowEventArgs args)
     {
-        this.Shutdown();
+        if (this._mainWindow is null || this._shuttingDown)
+        {
+            return;
+        }
+
+        args.Handled = true;
+        this._mainWindow.AppWindow.Hide();
     }
 
     private void OnHotKeyPressed()

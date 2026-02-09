@@ -88,6 +88,19 @@
                             ItemsSource="{Binding CornerPreferenceOptions}"
                             SelectedItem="{Binding SelectedCornerPreference, Mode=TwoWay}" />
                     </controls:SettingsCard>
+                    <controls:SettingsCard
+                        Header="Escape key behavior"
+                        Description="Choose what ESC does in companion windows."
+                        ContentAlignment="Right">
+                        <controls:SettingsCard.HeaderIcon>
+                            <SymbolIcon Symbol="Keyboard" />
+                        </controls:SettingsCard.HeaderIcon>
+                        <ComboBox
+                            MinWidth="200"
+                            DisplayMemberPath="DisplayName"
+                            ItemsSource="{Binding EscapeBehaviorOptions}"
+                            SelectedItem="{Binding SelectedEscapeBehavior, Mode=TwoWay}" />
+                    </controls:SettingsCard>
 
                     <TextBlock
                         Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"

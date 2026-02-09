@@ -11,6 +11,8 @@ internal sealed record AppSettings
 
     public CompanionCornerPreference CornerPreference { get; init; } = CompanionCornerPreference.Round;
 
+    public EscapeKeyBehavior EscapeBehavior { get; init; } = EscapeKeyBehavior.HideWindow;
+
     public string ChatProvider { get; init; } = ChatProviders.Ollama;
 
     public string OllamaEndpoint { get; init; } = "http://localhost:11434";

@@ -30,7 +30,7 @@
                         Header="Companion list"
                         Description="Browse active and saved companion sessions.">
                         <TextBlock
-                            FontSize="12"
+                            FontSize="15"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Text="Coming soon." />
                     </controls:SettingsCard>

@@ -68,4 +68,13 @@ public sealed partial class MainWindow : Window
             ContentFrame.Navigate(pageType);
         }
     }
+
+    internal void ShowSettingsPage()
+    {
+        this.NavigateTo("settings");
+        if (RootNavView is not null)
+        {
+            RootNavView.SelectedItem = RootNavView.SettingsItem;
+        }
+    }
 }

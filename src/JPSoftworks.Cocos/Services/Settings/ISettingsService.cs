@@ -12,6 +12,8 @@ internal interface ISettingsService
 
     void UpdateCornerPreference(CompanionCornerPreference preference);
 
+    void UpdateEscapeBehavior(EscapeKeyBehavior behavior);
+
     void UpdateChatProvider(string provider);
 
     void UpdateOllamaEndpoint(string endpoint);

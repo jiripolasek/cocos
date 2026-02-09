@@ -12,14 +12,21 @@ internal sealed partial class StickyNoteViewModel : ObservableObject
     private bool _isSending;
     private bool _isChatSaved;
     private ChatModelOption? _selectedModel;
+    private string _contextSummary = string.Empty;
     public ObservableCollection<ChatMessage> Messages { get; } = new();
     public ObservableCollection<NoteItemViewModel> Notes { get; } = new();
     public ObservableCollection<ChatModelOption> ModelOptions { get; } = new();
     public ObservableCollection<ContextItemViewModel> ContextItems { get; } = new();
+    public ObservableCollection<ContextItemViewModel> SensitiveContextItems { get; } = new();
 
     public StickyNoteViewModel()
     {
         this.ContextItems.CollectionChanged += (_, _) => this.OnPropertyChanged(nameof(this.HasContext));
+        this.SensitiveContextItems.CollectionChanged += (_, _) =>
+        {
+            this.OnPropertyChanged(nameof(this.HasContext));
+            this.OnPropertyChanged(nameof(this.HasSensitiveContext));
+        };
     }
 
     public string Emoji
@@ -66,7 +73,24 @@ internal sealed partial class StickyNoteViewModel : ObservableObject
         set => this.SetProperty(ref this._selectedModel, value);
     }
 
-    public bool HasContext => this.ContextItems.Count > 0;
+    public string ContextSummary
+    {
+        get => this._contextSummary;
+        set
+        {
+            if (this.SetProperty(ref this._contextSummary, value))
+            {
+                this.OnPropertyChanged(nameof(this.HasContextSummary));
+                this.OnPropertyChanged(nameof(this.HasContext));
+            }
+        }
+    }
+
+    public bool HasContextSummary => !string.IsNullOrWhiteSpace(this._contextSummary);
+
+    public bool HasSensitiveContext => this.SensitiveContextItems.Count > 0;
+
+    public bool HasContext => this.HasContextSummary || this.HasSensitiveContext;
 }
 
 public sealed class ChatMessage
@@ -75,7 +99,9 @@ public sealed class ChatMessage
 
     public bool IsUser { get; init; }
 
-    public bool IsSystem => !this.IsUser;
+    public bool IsHero { get; init; }
+
+    public bool IsSystem => !this.IsUser && !this.IsHero;
 }
 
 public sealed class ChatModelOption

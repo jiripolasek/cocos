@@ -37,6 +37,11 @@ internal sealed class SettingsService : ISettingsService
         });
     }
 
+    public void UpdateEscapeBehavior(EscapeKeyBehavior behavior)
+    {
+        this.UpdateSettings(this._settings with { EscapeBehavior = behavior });
+    }
+
     public void UpdateChatProvider(string provider)
     {
         this.UpdateSettings(this._settings with { ChatProvider = provider });

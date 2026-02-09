@@ -11,6 +11,8 @@ internal sealed partial class CompanionAppearanceWindow : Window
         InitializeComponent();
         this.Title = "Companion appearance";
         this.AppWindow.Resize(new SizeInt32(520, 640));
+        this.ExtendsContentIntoTitleBar = true;
+        this.SetTitleBar(AppearanceTitleBar);
         ContentFrame.Content = new CompanionAppearancePage(viewModel);
     }
 }

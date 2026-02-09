@@ -12,6 +12,7 @@
     xmlns:viewModels="using:JPSoftworks.Cocos.ViewModels"
     xmlns:viewModels1="using:JPSoftworks.Cocos.ViewModels"
     xmlns:cocos="using:JPSoftworks.Cocos"
+    xmlns:winUi="using:CommunityToolkit.WinUI"
     mc:Ignorable="d"
     d:DataContext="{d:DesignInstance viewModels1:StickyNoteViewModel}"
     Width="300"
@@ -28,9 +29,10 @@
             <cocos:FollowGlyphConverter x:Key="FollowGlyphConverter" />
             <cocos:SendGlyphConverter x:Key="SendGlyphConverter" />
             <cocos:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <cocos:IndexToVisibilityConverter x:Key="IndexToVisibilityConverter" />
 
             <Style x:Key="TinyButtonStyle" TargetType="Button" BasedOn="{StaticResource SubtleButtonStyle}">
-                <Setter Property="Height" Value="14" />
+                <Setter Property="Height" Value="20" />
                 <Setter Property="Padding" Value="0"></Setter>
             </Style>
             <Style x:Key="NoteToggleStyle" TargetType="ToggleButton">
@@ -58,20 +60,132 @@
                 <Setter Property="MinHeight" Value="28" />
             </Style>
             <Style x:Key="PromptSendButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
-                <Setter Property="Background" Value="Black" />
-                <Setter Property="Foreground" Value="White" />
-                <Setter Property="BorderBrush" Value="Black" />
+                <Setter Property="Background" Value="{ThemeResource DarkAcrylicFill}" />
+                <Setter Property="Foreground" Value="{ThemeResource DarkAcrylicFillForeground}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource DarkAcrylicFill}" />
                 <Setter Property="CornerRadius" Value="16" />
                 <Setter Property="MinWidth" Value="36" />
                 <Setter Property="MinHeight" Value="36" />
                 <Setter Property="Padding" Value="8" />
             </Style>
+            <Style x:Key="PromptAuxButtonStyle" TargetType="Button" BasedOn="{StaticResource SubtleButtonStyle}">
+                <Setter Property="MinWidth" Value="36" />
+                <Setter Property="MinHeight" Value="36" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="Padding" Value="8" />
+                <Setter Property="BorderBrush" Value="{ThemeResource DarkAcrylicFill}" />
+            </Style>
+
+            <DataTemplate x:Key="HeroMessageTemplate" x:DataType="viewModels1:ChatMessage">
+                <Border Margin="0,8"
+                        Background="Transparent"
+                        HorizontalAlignment="Center">
+                    <controls:MarkdownTextBlock
+                        MaxWidth="260"
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind Text}" />
+                </Border>
+            </DataTemplate>
+            <DataTemplate x:Key="ChatMessageTemplate" x:DataType="viewModels1:ChatMessage">
+                <StackPanel>
+                    <Border x:Name="BubbleRoot"
+                            Margin="0,4"
+                            Padding="8"
+                            Background="{Binding IsUser, Converter={StaticResource ChatBubbleBrushConverter}}"
+                            CornerRadius="12"
+                            HorizontalAlignment="{Binding IsUser, Converter={StaticResource HorizontalAlignConverter}}">
+                        <Border.ContextFlyout>
+                            <CommandBarFlyout>
+                                <AppBarButton Label="Copy"
+                                              Click="OnCopyMessageClicked">
+                                    <AppBarButton.Icon>
+                                        <SymbolIcon Symbol="Copy" />
+                                    </AppBarButton.Icon>
+                                </AppBarButton>
+                                <AppBarButton Label="Retry"
+                                              Visibility="{Binding IsUser, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                              Click="OnRetryMessageClicked">
+                                    <AppBarButton.Icon>
+                                        <SymbolIcon Symbol="Refresh" />
+                                    </AppBarButton.Icon>
+                                </AppBarButton>
+                                <AppBarButton Label="Paste"
+                                              Visibility="{Binding IsSystem, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                              Click="OnPasteToParentClicked">
+                                    <AppBarButton.Icon>
+                                        <SymbolIcon Symbol="Paste" />
+                                    </AppBarButton.Icon>
+                                </AppBarButton>
+                                <AppBarButton Label="Type"
+                                              Visibility="{Binding IsSystem, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                              Click="OnTypeToParentClicked">
+                                    <AppBarButton.Icon>
+                                        <SymbolIcon Symbol="Keyboard" />
+                                    </AppBarButton.Icon>
+                                </AppBarButton>
+                                <AppBarButton Label="Save to notes"
+                                              Visibility="{Binding IsSystem, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                              Click="OnSaveMessageAsNoteClicked">
+                                    <AppBarButton.Icon>
+                                        <SymbolIcon Symbol="Save" />
+                                    </AppBarButton.Icon>
+                                </AppBarButton>
+                            </CommandBarFlyout>
+                        </Border.ContextFlyout>
+                        <controls:MarkdownTextBlock
+                            Foreground="{Binding IsUser, Converter={StaticResource ChatBubbleForegroundConverter}}"
+                            Text="{x:Bind Text}" />
+                    </Border>
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="4"
+                                Margin="0,0,0,4"
+                                Visibility="{Binding (winUi:FrameworkElementExtensions.Ancestor).IsPointerOver, RelativeSource={RelativeSource Self}, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                winUi:FrameworkElementExtensions.AncestorType="ListView">
+                        <Button Style="{StaticResource TinyButtonStyle}"
+                                Click="OnCopyMessageClicked">
+                            <FontIcon Glyph="&#xE8C8;" FontSize="12" />
+                        </Button>
+                        <Button Style="{StaticResource TinyButtonStyle}"
+                                x:Name="Button1"
+                                x:Load="{x:Bind IsUser}"
+                                Click="OnRetryMessageClicked">
+                            <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                        </Button>
+                        <Button Style="{StaticResource TinyButtonStyle}"
+                                x:Name="Button2"
+                                x:Load="{x:Bind IsSystem}"
+                                Click="OnPasteToParentClicked">
+                            <FontIcon Glyph="&#xE77F;" FontSize="12" />
+                        </Button>
+                        <Button Style="{StaticResource TinyButtonStyle}"
+                                x:Name="Button3"
+                                x:Load="{x:Bind IsSystem}"
+                                Click="OnTypeToParentClicked">
+                            <FontIcon Glyph="&#xE144;" FontSize="12" />
+                        </Button>
+                        <Button Style="{StaticResource TinyButtonStyle}"
+                                x:Name="Button4"
+                                x:Load="{x:Bind IsSystem}"
+                                Click="OnSaveMessageAsNoteClicked">
+                            <FontIcon Glyph="&#xE74E;" FontSize="12" />
+                            <ToolTipService.ToolTip>
+                                <ToolTip Content="Save to notes" />
+                            </ToolTipService.ToolTip>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </DataTemplate>
+            <cocos:ChatMessageTemplateSelector x:Key="ChatMessageTemplateSelector"
+                                               DefaultTemplate="{StaticResource ChatMessageTemplate}"
+                                               HeroTemplate="{StaticResource HeroMessageTemplate}" />
         </Grid.Resources>
 
         <controls:TitleBar x:Name="CustomTitleBar"
                            AutoConfigureCustomTitleBar="True"
                            CanDrag="True"
-                           DisplayMode="Standard"
+                           DisplayMode="Tall"
                            Grid.Row="0">
             <controls:TitleBar.Content>
                 <Grid>
@@ -118,6 +232,7 @@
                         </ToggleButton.Resources>
                         <ToggleButton.Content>
                             <FontIcon FontSize="12"
+                                      Foreground="{Binding Foreground, ElementName=FollowToggle}"
                                       Glyph="{Binding IsFollowing, Converter={StaticResource FollowGlyphConverter}}" />
                         </ToggleButton.Content>
                         <ToolTipService.ToolTip>
@@ -132,10 +247,10 @@
                         <Button.Content>
                             <FontIcon Glyph="&#xE712;" FontSize="12" />
                         </Button.Content>
-                         <Button.Flyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem Text="Show settings" Click="OnShowSettingsClicked" />
-                                    <MenuFlyoutItem Text="Show intro" Click="OnShowOobeClicked" />
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Show settings" Click="OnShowSettingsClicked" />
+                                <MenuFlyoutItem Text="Show intro" Click="OnShowOobeClicked" />
                                 <ToggleMenuFlyoutItem
                                     Text="Save chat"
                                     IsChecked="{Binding IsChatSaved, Mode=TwoWay}"
@@ -144,7 +259,7 @@
                                 <MenuFlyoutSeparator />
                                 <MenuFlyoutItem Text="Appearance..." Click="OnShowAppearanceClicked" />
                             </MenuFlyout>
-                         </Button.Flyout>
+                        </Button.Flyout>
                     </Button>
                     <Button
                         x:Name="CloseButton"
@@ -164,17 +279,24 @@
             x:Name="ContentBorder"
             Grid.Row="1"
             Background="Transparent">
-            <TabView
-                x:Name="MainTabs"
-                IsAddTabButtonVisible="False"
-                VerticalAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
-                SelectionChanged="OnTabSelectionChanged">
-                <TabViewItem Header="Chat"
-                             IsClosable="False"
-                             HorizontalContentAlignment="Stretch"
-                             VerticalContentAlignment="Stretch">
-                    <Grid VerticalAlignment="Stretch">
+            <Grid RowSpacing="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <controls:Segmented
+                    x:Name="MainTabs"
+                    Margin="12,12,12,0"
+                    SelectedIndex="0"
+                    HorizontalAlignment="Stretch"
+                    SelectionChanged="OnTabSelectionChanged">
+                    <controls:SegmentedItem Content="Chat" />
+                    <controls:SegmentedItem Content="Notes" />
+                </controls:Segmented>
+                <Grid Grid.Row="1">
+                    <Grid
+                        VerticalAlignment="Stretch"
+                        Visibility="{Binding SelectedIndex, ElementName=MainTabs, Converter={StaticResource IndexToVisibilityConverter}, ConverterParameter=0}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
@@ -183,135 +305,92 @@
                                 Background="{StaticResource LayerOnAccentAcrylicFillColorDefaultBrush}"
                                 BorderBrush="{StaticResource DividerStrokeColorDefaultBrush}"
                                 BorderThickness="0,1,0,1"
-                                Padding="12">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding Messages}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="viewModels1:ChatMessage">
-                                            <Border x:Name="BubbleRoot"
-                                                    Margin="0,4"
-                                                    Padding="8"
-                                                    Background="{Binding IsUser, Converter={StaticResource ChatBubbleBrushConverter}}"
-                                                    CornerRadius="12"
-                                                    HorizontalAlignment="{Binding IsUser, Converter={StaticResource HorizontalAlignConverter}}">
-                                                <Border.ContextFlyout>
-                                                    <CommandBarFlyout>
-                                                        <AppBarButton Label="Copy"
-                                                                      Click="OnCopyMessageClicked">
-                                                            <AppBarButton.Icon>
-                                                                <SymbolIcon Symbol="Copy" />
-                                                            </AppBarButton.Icon>
-                                                        </AppBarButton>
-                                                        <AppBarButton Label="Retry"
-                                                                      Visibility="{Binding IsUser, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                      Click="OnRetryMessageClicked">
-                                                            <AppBarButton.Icon>
-                                                                <SymbolIcon Symbol="Refresh" />
-                                                            </AppBarButton.Icon>
-                                                        </AppBarButton>
-                                                        <AppBarButton Label="Paste"
-                                                                      Visibility="{Binding IsSystem, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                      Click="OnPasteToParentClicked">
-                                                            <AppBarButton.Icon>
-                                                                <SymbolIcon Symbol="Paste" />
-                                                            </AppBarButton.Icon>
-                                                        </AppBarButton>
-                                                        <AppBarButton Label="Type"
-                                                                      Visibility="{Binding IsSystem, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                      Click="OnTypeToParentClicked">
-                                                            <AppBarButton.Icon>
-                                                                <SymbolIcon Symbol="Keyboard" />
-                                                            </AppBarButton.Icon>
-                                                        </AppBarButton>
-                                                        <AppBarButton Label="Save to notes"
-                                                                      Visibility="{Binding IsSystem, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                                                      Click="OnSaveMessageAsNoteClicked">
-                                                            <AppBarButton.Icon>
-                                                                <SymbolIcon Symbol="Save" />
-                                                            </AppBarButton.Icon>
-                                                        </AppBarButton>
-                                                    </CommandBarFlyout>
-                                                </Border.ContextFlyout>
-                                                <StackPanel Spacing="6">
-                                                    <controls:MarkdownTextBlock
-                                                        Foreground="{Binding IsUser, Converter={StaticResource ChatBubbleForegroundConverter}}"
-                                                        Text="{x:Bind Text}" />
-                                                    <StackPanel Orientation="Horizontal"
-                                                                HorizontalAlignment="Right"
-                                                                Spacing="4"
-                                                                Visibility="{Binding IsPointerOver, ElementName=BubbleRoot, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                        <Button Style="{StaticResource TinyButtonStyle}"
-                                                                Click="OnCopyMessageClicked">
-                                                            <FontIcon Glyph="&#xE8C8;" FontSize="9" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource TinyButtonStyle}"
-                                                                x:Name="Button1"
-                                                                x:Load="{x:Bind IsUser}"
-                                                                Click="OnRetryMessageClicked">
-                                                            <FontIcon Glyph="&#xE72C;" FontSize="9" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource TinyButtonStyle}"
-                                                                x:Name="Button2"
-                                                                x:Load="{x:Bind IsSystem}"
-                                                                Click="OnPasteToParentClicked">
-                                                            <FontIcon Glyph="&#xE77F;" FontSize="9" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource TinyButtonStyle}"
-                                                                x:Name="Button3"
-                                                                x:Load="{x:Bind IsSystem}"
-                                                                Click="OnTypeToParentClicked">
-                                                            <FontIcon Glyph="&#xE144;" FontSize="9" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource TinyButtonStyle}"
-                                                                x:Name="Button4"
-                                                                x:Load="{x:Bind IsSystem}"
-                                                                Click="OnSaveMessageAsNoteClicked">
-                                                            <FontIcon Glyph="&#xE74E;" FontSize="9" />
-                                                            <ToolTipService.ToolTip>
-                                                                <ToolTip Content="Save to notes" />
-                                                            </ToolTipService.ToolTip>
-                                                        </Button>
-                                                    </StackPanel>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                Padding="0">
+                            <ScrollViewer x:Name="ChatScrollViewer" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl
+                                    Margin="12"
+                                    x:Name="ChatItems"
+                                    ItemsSource="{Binding Messages}"
+                                    ItemTemplateSelector="{StaticResource ChatMessageTemplateSelector}" />
                             </ScrollViewer>
                         </Border>
 
                         <Border Grid.Row="1" Background="Transparent"
                                 Padding="12" x:Name="InputContainer">
                             <StackPanel Spacing="8">
-                                <Border
-                                    Padding="6"
-                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                    CornerRadius="6">
-                                    <StackPanel Spacing="4">
-                                        <TextBlock
-                                            FontSize="11"
-                                            FontWeight="SemiBold"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="Context" />
-                                        <ItemsControl
-                                            ItemsSource="{Binding ContextItems}"
-                                            Visibility="{Binding HasContext, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Border>
+                                    <StackPanel Spacing="2">
+                                        <ItemsControl>
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <ItemsWrapGrid Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="viewModels1:ContextItemViewModel">
-                                                    <StackPanel Spacing="1">
-                                                        <TextBlock
-                                                            FontSize="10"
-                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                            Text="{x:Bind Label}" />
-                                                        <TextBlock
-                                                            FontSize="11"
-                                                            TextWrapping="Wrap"
-                                                            MaxLines="2"
-                                                            TextTrimming="CharacterEllipsis"
-                                                            Text="{x:Bind Content}" />
-                                                    </StackPanel>
+                                                <DataTemplate>
+                                                    <ContentPresenter Content="{Binding}" />
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
+                                            <ItemsControl.Items>
+                                                <Border
+                                                    Padding="4,1"
+                                                    CornerRadius="8"
+                                                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                                    BorderThickness="1"
+                                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                    Visibility="{Binding HasContextSummary, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <ToolTipService.ToolTip>
+                                                        <ToolTip>
+                                                            <TextBlock
+                                                                MaxWidth="280"
+                                                                TextWrapping="Wrap"
+                                                                Text="{Binding ContextSummary}" />
+                                                        </ToolTip>
+                                                    </ToolTipService.ToolTip>
+                                                    <FontIcon
+                                                        Glyph="&#xE946;"
+                                                        FontSize="10"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                </Border>
+                                                <ItemsControl
+                                                    ItemsSource="{Binding SensitiveContextItems}"
+                                                    Visibility="{Binding HasSensitiveContext, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <ItemsWrapGrid Orientation="Horizontal" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="viewModels1:ContextItemViewModel">
+                                                            <Border
+                                                                Margin="0,0,4,4"
+                                                                Padding="4,1"
+                                                                CornerRadius="8"
+                                                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                                                BorderThickness="1">
+                                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                                    <TextBlock
+                                                                        FontSize="12"
+                                                                        Text="{x:Bind Label}" />
+                                                                    <Button
+                                                                        Padding="0"
+                                                                        MinWidth="0"
+                                                                        MinHeight="0"
+                                                                        BorderThickness="0"
+                                                                        Background="Transparent"
+                                                                        Click="OnRemoveContextClicked">
+                                                                        <FontIcon
+                                                                            Glyph="&#xE711;"
+                                                                            FontSize="8"
+                                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ItemsControl.Items>
                                         </ItemsControl>
                                         <StackPanel
                                             Orientation="Horizontal"
@@ -326,15 +405,17 @@
                                     </StackPanel>
                                 </Border>
                                 <Border
-                                    Background="Black"
+                                    Background="{ThemeResource DarkAcrylicFill}"
                                     CornerRadius="16"
                                     Padding="2">
                                     <AutoSuggestBox
                                         x:Name="PromptTextBox"
                                         Background="Transparent"
-                                        Foreground="White"
+                                        BorderBrush="Transparent"
                                         BorderThickness="0"
-                                        PlaceholderText="Tell me what to do"
+                                        Foreground="{ThemeResource DarkAcrylicFillForeground}"
+                                        TextBoxStyle="{StaticResource PromptTextBoxStyle}"
+                                        PlaceholderText="Tell me what to do (Ctrl+Enter to send)"
                                         GotFocus="OnPromptGotFocus"
                                         TextChanged="OnPromptTextChanged"
                                         SuggestionChosen="OnPromptSuggestionChosen"
@@ -345,6 +426,7 @@
                                 <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
@@ -364,24 +446,39 @@
                                             SelectionChanged="OnModelSelectionChanged" />
                                     </StackPanel>
                                     <Button Grid.Column="1"
-                                            Style="{StaticResource PromptSendButtonStyle}"
-                                            Click="OnSendClicked">
+                                            Style="{StaticResource PromptAuxButtonStyle}">
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuFlyoutItem Text="Attach files..."
+                                                                Click="OnAddContextClicked" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
                                         <FontIcon
-                                            Foreground="White"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            FontSize="12"
+                                            Glyph="&#xE723;" />
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip Content="Add context" />
+                                        </ToolTipService.ToolTip>
+                                    </Button>
+                                    <Button Grid.Column="2"
+                                            Style="{StaticResource PromptSendButtonStyle}"
+                                            Click="OnSendClicked"
+                                            ToolTipService.ToolTip="Execute the command or send it to SkyNet (Ctrl+Enter)">
+                                        <FontIcon
+                                            Foreground="{ThemeResource DarkAcrylicFillForeground}"
+                                            FontSize="12"
                                             Glyph="{Binding IsSending, Converter={StaticResource SendGlyphConverter}}" />
                                     </Button>
                                 </Grid>
                             </StackPanel>
                         </Border>
                     </Grid>
-                </TabViewItem>
-                <TabViewItem Header="Notes"
-                             IsClosable="False"
-                             HorizontalContentAlignment="Stretch"
-                             VerticalContentAlignment="Stretch">
-                    <Grid Padding="12"
-                          RowSpacing="12"
-                          VerticalAlignment="Stretch">
+                    <Grid
+                        Padding="12"
+                        RowSpacing="12"
+                        VerticalAlignment="Stretch"
+                        Visibility="{Binding SelectedIndex, ElementName=MainTabs, Converter={StaticResource IndexToVisibilityConverter}, ConverterParameter=1}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
@@ -392,13 +489,14 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Border
-                                Background="Black"
+                                Background="{ThemeResource DarkAcrylicFill}"
                                 CornerRadius="16"
                                 Padding="2">
                                 <TextBox
                                     x:Name="NoteInputBox"
+                                    Style="{StaticResource PromptTextBoxStyle}"
                                     Background="Transparent"
-                                    Foreground="White"
+                                    Foreground="{ThemeResource DarkAcrylicFillForeground}"
                                     BorderThickness="0"
                                     PlaceholderText="Add a note"
                                     TextWrapping="Wrap"
@@ -410,7 +508,7 @@
                                 Grid.Column="1"
                                 Style="{StaticResource PromptSendButtonStyle}"
                                 Click="OnAddNoteClicked">
-                                <FontIcon Foreground="White" Glyph="&#xE710;" />
+                                <FontIcon Foreground="{ThemeResource DarkAcrylicFillForeground}" Glyph="&#xE710;" />
                             </Button>
                         </Grid>
                         <ScrollViewer Grid.Row="1">
@@ -461,8 +559,8 @@
                             </ItemsControl>
                         </ScrollViewer>
                     </Grid>
-                </TabViewItem>
-            </TabView>
+                </Grid>
+            </Grid>
         </Border>
     </Grid>
 </winuiEx:WindowEx>

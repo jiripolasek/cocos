@@ -30,7 +30,7 @@
                         Header="App integrations"
                         Description="Configure app-specific companions and context providers.">
                         <TextBlock
-                            FontSize="12"
+                            FontSize="15"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Text="Coming soon." />
                     </controls:SettingsCard>

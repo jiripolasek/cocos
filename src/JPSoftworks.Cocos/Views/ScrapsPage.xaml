@@ -30,7 +30,7 @@
                         Header="Scrap library"
                         Description="Collect quick notes and reusable snippets.">
                         <TextBlock
-                            FontSize="12"
+                            FontSize="15"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Text="Coming soon." />
                     </controls:SettingsCard>

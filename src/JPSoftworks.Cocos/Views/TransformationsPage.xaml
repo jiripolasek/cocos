@@ -30,7 +30,7 @@
                         Header="Transformation scripts"
                         Description="Configure transformation steps that can run on captured input.">
                         <TextBlock
-                            FontSize="12"
+                            FontSize="15"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Text="Coming soon." />
                     </controls:SettingsCard>

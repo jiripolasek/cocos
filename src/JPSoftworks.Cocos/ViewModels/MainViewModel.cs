@@ -14,6 +14,7 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
     private int _activeNotes;
     private bool _singleWindowMode;
     private CornerPreferenceOption? _selectedCornerPreference;
+    private EscapeBehaviorOption? _selectedEscapeBehavior;
 
     public IRelayCommand CreateNoteCommand { get; }
     public IRelayCommand ExitCommand { get; }
@@ -25,6 +26,12 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         new(CompanionCornerPreference.DoNotRound, "No rounding"),
         new(CompanionCornerPreference.Round, "Round"),
         new(CompanionCornerPreference.RoundSmall, "Round small")
+    ];
+    public IReadOnlyList<EscapeBehaviorOption> EscapeBehaviorOptions { get; } =
+    [
+        new(EscapeKeyBehavior.HideWindow, "Hide companion window"),
+        new(EscapeKeyBehavior.DismissWindow, "Dismiss companion window"),
+        new(EscapeKeyBehavior.DoNothing, "Do nothing")
     ];
 
     public MainViewModel(StickyNoteManager noteManager, App app, ISettingsService settingsService)
@@ -100,6 +107,21 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
+    public EscapeBehaviorOption? SelectedEscapeBehavior
+    {
+        get => this._selectedEscapeBehavior;
+        set
+        {
+            if (value is null || this._selectedEscapeBehavior?.Value == value.Value)
+            {
+                return;
+            }
+
+            this._settingsService.UpdateEscapeBehavior(value.Value);
+            this.SetProperty(ref this._selectedEscapeBehavior, value);
+        }
+    }
+
     private void OnSettingsChanged(object? sender, AppSettings settings) => this.ApplySettings(settings);
 
     private void ApplySettings(AppSettings settings)
@@ -109,7 +131,12 @@ internal sealed partial class MainViewModel : ObservableObject, IDisposable
         var option = this.CornerPreferenceOptions.FirstOrDefault(item => item.Value == settings.CornerPreference)
             ?? this.CornerPreferenceOptions.FirstOrDefault();
         this.SetProperty(ref this._selectedCornerPreference, option, nameof(this.SelectedCornerPreference));
+        var escapeOption = this.EscapeBehaviorOptions.FirstOrDefault(item => item.Value == settings.EscapeBehavior)
+            ?? this.EscapeBehaviorOptions.FirstOrDefault();
+        this.SetProperty(ref this._selectedEscapeBehavior, escapeOption, nameof(this.SelectedEscapeBehavior));
     }
 }
 
 internal sealed record CornerPreferenceOption(CompanionCornerPreference Value, string DisplayName);
+
+internal sealed record EscapeBehaviorOption(EscapeKeyBehavior Value, string DisplayName);

@@ -1,7 +1,11 @@
 using System.Runtime.InteropServices;
+using Windows.Foundation;
 using Windows.Graphics;
 using Windows.System;
 using Windows.UI;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using CommunityToolkit.WinUI.Helpers;
 using JPSoftworks.Cocos.Interop;
 using JPSoftworks.Cocos.Services.Chat;
 using JPSoftworks.Cocos.Services.Companion;
@@ -14,12 +18,15 @@ using Microsoft.UI.Composition;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using WinRT;
 using WinRT.Interop;
 using WinUIEx;
+using ColorHelper = CommunityToolkit.WinUI.Helpers.ColorHelper;
 
 namespace JPSoftworks.Cocos;
 
@@ -42,11 +49,14 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
     private bool _toolStyleApplied;
     private bool _didInitialFocus;
     private bool _hiddenByParentMinimize;
+    private bool _hiddenByUser;
     private bool _modelOverride;
     private bool _suppressModelSelectionChanged;
     private CompanionCornerPreference _cornerPreference = CompanionCornerPreference.Round;
     private readonly StickyNoteViewModel _viewModel = new();
     private readonly List<ChatContextItem> _contextItems = new();
+    private readonly List<ChatContextItem> _manualContextItems = new();
+    private readonly HashSet<string> _suppressedContextLabels = new(StringComparer.OrdinalIgnoreCase);
     private readonly ILogger<StickyNoteWindow>? _logger;
     private readonly ISettingsService _settingsService;
     private readonly IReadOnlyList<IChatService> _chatServices;
@@ -128,6 +138,9 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
 
         this.LoadNotes();
         this.LoadContextAsync();
+        this.EnsureHeroMessage(this.ResolveHeroAppLabel());
+
+        this._viewModel.Messages.CollectionChanged += (_, _) => this.ScrollChatToBottom();
     }
 
     private void InitializeBackdrop()
@@ -160,7 +173,7 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
         this.EnsureHandle();
         this.ApplyToolWindowStyle();
         this.ApplyCornerPreference(this._cornerPreference);
-        this.AppWindow.Resize(new SizeInt32(300, 450));
+        this.AppWindow.Resize(new SizeInt32(360, 480));
         this.PositionRelativeTo(this._initialParentRect);
         NativeMethods.SetForegroundWindow(this._noteHwnd);
         this.FocusPrompt();
@@ -231,9 +244,18 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
         this._accentColor = this.AdjustAccent(this._baseAccent, appTheme);
         if (this._acrylicController is not null)
         {
-            this._acrylicController.TintColor = this._accentColor;
-            this._acrylicController.TintOpacity = 0.75f;
-            this._acrylicController.LuminosityOpacity = 0.75f;
+            if (appTheme == ApplicationTheme.Dark)
+            {
+                this._acrylicController.TintColor = this._accentColor;
+                this._acrylicController.TintOpacity = 0.75f;
+                this._acrylicController.LuminosityOpacity = 0.75f;
+            }
+            else
+            {
+                this._acrylicController.TintColor = this._accentColor;
+                this._acrylicController.TintOpacity = 0.45f;
+                this._acrylicController.LuminosityOpacity = 0.85f;
+            }
         }
     }
 
@@ -302,6 +324,11 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
         if (NativeMethods.IsIconic(this._parentHwnd))
         {
             this.HideForParentMinimize();
+            return;
+        }
+
+        if (this._hiddenByUser)
+        {
             return;
         }
 
@@ -442,6 +469,13 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
     public void Summon(NativeMethods.RECT rect)
     {
         this.EnsureHandle();
+        if (this._hiddenByUser || !this.AppWindow.IsVisible)
+        {
+            this._hiddenByUser = false;
+            this._hiddenByParentMinimize = false;
+            this.AppWindow.Show();
+        }
+
         this.Activate();
         NativeMethods.SetForegroundWindow(this._noteHwnd);
         this.FocusPrompt();
@@ -623,13 +657,21 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
 
     private Color AdjustAccent(Color baseColor, ApplicationTheme? themeOverride = null)
     {
-        _ = themeOverride;
-        return baseColor;
+        var result = baseColor;
+        if (themeOverride == ApplicationTheme.Dark)
+        {
+            var hsv = result.ToHsv();
+            hsv.V *= 0.5f;
+            result = ColorHelper.FromHsv(hsv.H, hsv.S, hsv.V, hsv.A);
+        }
+
+        return result;
     }
 
     private void OnRootLoaded(object sender, RoutedEventArgs e)
     {
         this.FocusActiveTab();
+        this.ScrollChatToBottom();
     }
 
     private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -685,7 +727,7 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
             return;
         }
 
-        var count = MainTabs.TabItems.Count;
+        var count = MainTabs.Items.Count;
         if (count == 0)
         {
             return;
@@ -745,6 +787,13 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
             return;
         }
 
+        if (e.Key == VirtualKey.Escape)
+        {
+            this.HandleEscapeKey();
+            e.Handled = true;
+            return;
+        }
+
         if (await this.TryHandlePasteShortcutAsync(e))
         {
             return;
@@ -781,7 +830,7 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
         // Ctrl+Shift+V ... paste last
         if (e.Key == VirtualKey.B && IsCtrlDown() && IsShiftDown())
         {
-            var last = this._viewModel.Messages.LastOrDefault(m => !m.IsUser);
+            var last = this._viewModel.Messages.LastOrDefault(m => !m.IsUser && !m.IsHero);
             if (last is null)
             {
                 return;
@@ -792,6 +841,69 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
             e.Handled = true;
             return;
         }
+    }
+
+    private void HandleEscapeKey()
+    {
+        var behavior = this._settingsService.Settings.EscapeBehavior;
+        switch (behavior)
+        {
+            case EscapeKeyBehavior.HideWindow:
+                this._hiddenByUser = true;
+                this._hiddenByParentMinimize = false;
+                this.AppWindow.Hide();
+                break;
+            case EscapeKeyBehavior.DismissWindow:
+                this.Close();
+                break;
+            case EscapeKeyBehavior.DoNothing:
+            default:
+                break;
+        }
+    }
+
+    private void ScrollChatToBottom()
+    {
+        if (ChatScrollViewer is null || ChatItems is null)
+        {
+            return;
+        }
+
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            ChatItems.UpdateLayout();
+            ChatScrollViewer.UpdateLayout();
+
+            if (ChatItems.Items.Count == 0)
+            {
+                return;
+            }
+
+            FrameworkElement? container = null;
+            if (ChatItems.ItemsPanelRoot is Panel panel && panel.Children.Count > 0)
+            {
+                container = panel.Children[panel.Children.Count - 1] as FrameworkElement;
+            }
+
+            if (container is null)
+            {
+                ChatScrollViewer.ScrollToVerticalOffset(ChatScrollViewer.ScrollableHeight);
+                return;
+            }
+
+            var point = container.TransformToVisual(ChatItems).TransformPoint(new Point(0, 0));
+            var targetOffset = point.Y;
+            if (targetOffset > ChatScrollViewer.ScrollableHeight)
+            {
+                targetOffset = ChatScrollViewer.ScrollableHeight;
+            }
+            else if (targetOffset < 0)
+            {
+                targetOffset = 0;
+            }
+
+            ChatScrollViewer.ScrollToVerticalOffset(targetOffset);
+        });
     }
 
     private void OnPromptTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -864,8 +976,68 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
         _ = this.ProcessPromptAsync();
     }
 
+    private async void OnAddContextClicked(object sender, RoutedEventArgs e)
+    {
+        this.EnsureHandle();
+        var picker = new FileOpenPicker
+        {
+            ViewMode = PickerViewMode.List,
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+        };
+        picker.FileTypeFilter.Add("*");
+        InitializeWithWindow.Initialize(picker, this._noteHwnd);
+
+        IReadOnlyList<StorageFile>? files;
+        try
+        {
+            files = await picker.PickMultipleFilesAsync();
+        }
+        catch (Exception ex)
+        {
+            this._logger?.LogError(ex, "Failed to open file picker for context attachments.");
+            return;
+        }
+
+        if (files is null || files.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var file in files)
+        {
+            var label = $"File: {file.Name}";
+            var content = string.IsNullOrWhiteSpace(file.Path) ? file.Name : file.Path;
+            var item = new ChatContextItem(label, content);
+            this._manualContextItems.Add(item);
+            this._contextItems.Add(item);
+            this._suppressedContextLabels.Remove(label);
+        }
+
+        this.RefreshContextItems();
+    }
+
+    private void OnRemoveContextClicked(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not ContextItemViewModel context)
+        {
+            return;
+        }
+
+        this._suppressedContextLabels.Add(context.Label);
+        RemoveContextItemsByLabel(this._manualContextItems, context.Label);
+        RemoveContextItemsByLabel(this._contextItems, context.Label);
+        this.RefreshContextItems();
+    }
+
     private async void NoteInputBox_OnPreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (e.Key == VirtualKey.Escape)
+        {
+            this.HandleEscapeKey();
+            e.Handled = true;
+            return;
+        }
+
         if (await this.TryHandlePasteShortcutAsync(e))
         {
             return;
@@ -983,6 +1155,56 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
     {
         this._viewModel.Messages.Add(new ChatMessage { Text = message, IsUser = false });
         this._dataStore.AddChatMessage(this._chatSession.Id, ChatMessageRole.System, message);
+    }
+
+    private void EnsureHeroMessage(string? appLabel)
+    {
+        var label = string.IsNullOrWhiteSpace(appLabel) ? "this app" : appLabel;
+        var text = $"""
+                    Hello, I'm your companion for **{label}**.
+
+                    Use # to reference items from your current context, like #clipboard, #selection, or #input.
+                    
+                    Use / to enter commands, like /save to save our chat, or /note to jot down a quick note.
+                    
+                    Ctrl+Shift+V to paste the last response to the app, Ctrl+Shift+B to type it out, or Ctrl+Shift+C to copy it to clipboard.
+                    """;
+        var heroIndex = -1;
+        for (var i = 0; i < this._viewModel.Messages.Count; i++)
+        {
+            if (this._viewModel.Messages[i].IsHero)
+            {
+                heroIndex = i;
+                break;
+            }
+        }
+
+        var heroMessage = new ChatMessage { Text = text, IsHero = true };
+        if (heroIndex >= 0)
+        {
+            this._viewModel.Messages[heroIndex] = heroMessage;
+        }
+        else
+        {
+            this._viewModel.Messages.Insert(0, heroMessage);
+        }
+    }
+
+    private string? ResolveHeroAppLabel()
+    {
+        var appItem = this._contextItems.FirstOrDefault(item =>
+            string.Equals(item.Label, "App", StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(appItem?.Content))
+        {
+            return appItem.Content;
+        }
+
+        if (!string.IsNullOrWhiteSpace(this._parentInfo.ProcessName))
+        {
+            return this._parentInfo.ProcessName;
+        }
+
+        return this._parentInfo.WindowTitle;
     }
 
     private string ResolveProvider(AppSettings settings)
@@ -1241,20 +1463,74 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
             var contextItems = await this._contextService.GetContextAsync(this._parentInfo, CancellationToken.None)
                 .ConfigureAwait(true);
             this._contextItems.Clear();
-            this._contextItems.AddRange(contextItems);
-            this._viewModel.ContextItems.Clear();
             foreach (var item in contextItems)
             {
-                var preview = BuildContextPreview(item.Content);
-                if (!string.IsNullOrWhiteSpace(preview))
+                if (!this._suppressedContextLabels.Contains(item.Label))
                 {
-                    this._viewModel.ContextItems.Add(new ContextItemViewModel(item.Label, preview));
+                    this._contextItems.Add(item);
                 }
             }
+            foreach (var item in this._manualContextItems)
+            {
+                if (!this._suppressedContextLabels.Contains(item.Label))
+                {
+                    this._contextItems.Add(item);
+                }
+            }
+            this.RefreshContextItems();
+
+            this.EnsureHeroMessage(this.ResolveHeroAppLabel());
         }
         catch (Exception ex)
         {
             this._logger?.LogError(ex, "Failed to load parent context.");
+        }
+    }
+
+    private void RefreshContextItems()
+    {
+        this._viewModel.ContextItems.Clear();
+        this._viewModel.SensitiveContextItems.Clear();
+        var summaryParts = new List<string>();
+        foreach (var item in this._contextItems)
+        {
+            var preview = BuildContextPreview(item.Content);
+            if (!string.IsNullOrWhiteSpace(preview))
+            {
+                this._viewModel.ContextItems.Add(new ContextItemViewModel(item.Label, preview));
+            }
+
+            if (IsSensitiveContextLabel(item.Label))
+            {
+                this._viewModel.SensitiveContextItems.Add(new ContextItemViewModel(item.Label, item.Content));
+                continue;
+            }
+
+            var summaryPreview = BuildSummaryPreview(item.Content);
+            if (!string.IsNullOrWhiteSpace(summaryPreview))
+            {
+                summaryParts.Add($"{item.Label}: {summaryPreview}");
+            }
+        }
+
+        this._viewModel.ContextSummary = summaryParts.Count > 0
+            ? string.Join(" | ", summaryParts)
+            : string.Empty;
+    }
+
+    private static void RemoveContextItemsByLabel(List<ChatContextItem> items, string label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return;
+        }
+
+        for (var i = items.Count - 1; i >= 0; i--)
+        {
+            if (string.Equals(items[i].Label, label, StringComparison.OrdinalIgnoreCase))
+            {
+                items.RemoveAt(i);
+            }
         }
     }
 
@@ -1273,6 +1549,41 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
         }
 
         return normalized.Substring(0, maxLength) + "...";
+    }
+
+    private static string BuildSummaryPreview(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return string.Empty;
+        }
+
+        var normalized = content.Replace("\r", " ").Replace("\n", " ").Replace("\t", " ").Trim();
+        const int maxLength = 60;
+        if (normalized.Length <= maxLength)
+        {
+            return normalized;
+        }
+
+        return normalized.Substring(0, maxLength) + "...";
+    }
+
+    private static bool IsSensitiveContextLabel(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return false;
+        }
+
+        var normalized = label.Trim().ToLowerInvariant();
+        return normalized is "selection" or "selection text" or "selected files" or "explorer folder" or "input" or "input text" or "clipboard"
+            || normalized.StartsWith("file:", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith("attachment:", StringComparison.OrdinalIgnoreCase)
+            || normalized.Contains("selection", StringComparison.OrdinalIgnoreCase)
+            || normalized.Contains("selected files", StringComparison.OrdinalIgnoreCase)
+            || normalized.Contains("explorer folder", StringComparison.OrdinalIgnoreCase)
+            || normalized.Contains("clipboard", StringComparison.OrdinalIgnoreCase)
+            || normalized.Contains("input text", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<(string Expanded, string? Error)> TryExpandReferencesAsync(string text)
@@ -1529,7 +1840,7 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
 
     private async Task CopyLastAssistantResultAsync()
     {
-        var last = this._viewModel.Messages.LastOrDefault(m => !m.IsUser);
+        var last = this._viewModel.Messages.LastOrDefault(m => !m.IsUser && !m.IsHero);
         if (last is null)
         {
             return;
@@ -1821,6 +2132,13 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
 
     private async void OnPromptPreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (e.Key == VirtualKey.Escape)
+        {
+            this.HandleEscapeKey();
+            e.Handled = true;
+            return;
+        }
+
         if (await this.TryHandlePasteShortcutAsync(e))
         {
             return;
@@ -1831,6 +2149,46 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
             return;
         }
     }
+}
+
+public sealed class IndexToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is not int index)
+        {
+            return Visibility.Collapsed;
+        }
+
+        var targetIndex = 0;
+        if (parameter is string paramText && int.TryParse(paramText, out var parsed))
+        {
+            targetIndex = parsed;
+        }
+
+        return index == targetIndex ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language) =>
+        throw new NotImplementedException();
+}
+
+public sealed class ChatMessageTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate? DefaultTemplate { get; set; }
+
+    public DataTemplate? HeroTemplate { get; set; }
+
+    protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
+    {
+        if (item is ChatMessage { IsHero: true })
+        {
+            return this.HeroTemplate ?? this.DefaultTemplate ?? base.SelectTemplateCore(item, container);
+        }
+
+        return this.DefaultTemplate ?? base.SelectTemplateCore(item, container);
+    }
+
 }
 
 public sealed class BooleanToHorizontalAlignmentConverter : IValueConverter
