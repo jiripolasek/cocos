@@ -3,10 +3,9 @@
 <img src="./art/StoreLogo.svg" alt="CoCos logo" width="200" height="200">
 <h1 align="center"><span style="font-weight: bold">CoCos</span> <br /><span style="font-weight: 200">Contextual Companions</span></h1>
 
-<video width="600" controls>
-  <source src="./art/intro.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+
+https://github.com/user-attachments/assets/eb224e21-0fa6-4a3c-b594-875a2a425c12
+
 
 </div>
 
