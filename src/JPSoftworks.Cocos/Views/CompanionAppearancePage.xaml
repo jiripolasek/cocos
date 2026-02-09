@@ -41,7 +41,7 @@
                         IsExpanded="True"
                         Visibility="{Binding HasSession, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <controls:SettingsExpander.Items>
-                            <controls:SettingsCard VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                            <controls:SettingsCard ContentAlignment="Vertical" HorizontalContentAlignment="Stretch">
                                 <ListView
                                     ItemsSource="{Binding Options}"
                                     SelectedItem="{Binding SelectedOption, Mode=TwoWay}"
