@@ -3,6 +3,8 @@
 <img src="./art/StoreLogo.svg" alt="CoCos logo" width="200" height="200">
 <h1 align="center"><span style="font-weight: bold">CoCos</span> <br /><span style="font-weight: 200">Contextual Companions</span></h1>
 
+![alt text](./art/screenshot1.png)
+
 
 https://github.com/user-attachments/assets/eb224e21-0fa6-4a3c-b594-875a2a425c12
 
@@ -21,6 +23,8 @@ Ever feel like you're constantly copying-pasting between your work and an AI app
 The best part? Each CoCo gets its own quirky identity with a unique color and animal emoji (like 🐿️ or 🐰 or 🦖), so you always know who you're talking to. Think of them as your own army of personal, productive Minions!
 
 Use them to summarize text, draft ideas, or just take quick notes without ever leaving your workflow.
+
+![alt text](./art/screenshot2.png)
 
 ## What can your CoCos do?
 
