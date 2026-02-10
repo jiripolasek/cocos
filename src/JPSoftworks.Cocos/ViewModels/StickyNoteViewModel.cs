@@ -18,6 +18,7 @@ internal sealed partial class StickyNoteViewModel : ObservableObject
     public ObservableCollection<ChatModelOption> ModelOptions { get; } = new();
     public ObservableCollection<ContextItemViewModel> ContextItems { get; } = new();
     public ObservableCollection<ContextItemViewModel> SensitiveContextItems { get; } = new();
+    public ObservableCollection<ContextItemViewModel> ContextPills { get; } = new();
 
     public StickyNoteViewModel()
     {
@@ -115,7 +116,16 @@ public sealed class ChatModelOption
     public bool IsDefault { get; init; }
 }
 
-internal sealed record ContextItemViewModel(string Label, string Content);
+internal sealed record ContextItemViewModel(string Label, string Content, string? IconGlyph = null, string? DisplayLabel = null)
+{
+    public bool HasIcon => !string.IsNullOrWhiteSpace(this.IconGlyph);
+
+    public string DisplayText => string.IsNullOrWhiteSpace(this.DisplayLabel) ? this.Label : this.DisplayLabel;
+
+    public bool HasDisplayText => !string.IsNullOrWhiteSpace(this.DisplayText);
+
+    public bool HasLabel => !string.IsNullOrWhiteSpace(this.Label);
+}
 
 internal sealed partial class NoteItemViewModel : ObservableObject
 {

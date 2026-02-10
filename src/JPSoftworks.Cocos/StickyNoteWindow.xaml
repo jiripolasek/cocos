@@ -320,77 +320,57 @@
                             <StackPanel Spacing="8">
                                 <Border>
                                     <StackPanel Spacing="2">
-                                        <ItemsControl>
+                                        <ItemsControl
+                                            ItemsSource="{Binding ContextPills}"
+                                            Visibility="{Binding HasContext, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
-                                                    <ItemsWrapGrid Orientation="Horizontal" />
+                                                    <controls:WrapPanel Orientation="Horizontal" HorizontalSpacing="2" />
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <ContentPresenter Content="{Binding}" />
+                                                <DataTemplate x:DataType="viewModels1:ContextItemViewModel">
+                                                    <Border
+                                                        Padding="4,1"
+                                                        CornerRadius="8"
+                                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                                        BorderThickness="1">
+                                                        <ToolTipService.ToolTip>
+                                                            <ToolTip>
+                                                                <TextBlock
+                                                                    MaxWidth="280"
+                                                                    TextWrapping="Wrap"
+                                                                    Text="{Binding Content}" />
+                                                            </ToolTip>
+                                                        </ToolTipService.ToolTip>
+                                                        <StackPanel Orientation="Horizontal" Spacing="2">
+                                                            <FontIcon
+                                                                Glyph="{Binding IconGlyph}"
+                                                                FontSize="10"
+                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                Visibility="{Binding HasIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                            <TextBlock
+                                                                FontSize="12"
+                                                                Text="{Binding DisplayText}"
+                                                                Visibility="{Binding HasDisplayText, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                            <Button
+                                                                Padding="0"
+                                                                MinWidth="0"
+                                                                MinHeight="0"
+                                                                BorderThickness="0"
+                                                                Background="Transparent"
+                                                                Click="OnRemoveContextClicked"
+                                                                Visibility="{Binding HasLabel, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                                <FontIcon
+                                                                    Glyph="&#xE711;"
+                                                                    FontSize="8"
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
-                                            <ItemsControl.Items>
-                                                <Border
-                                                    Padding="4,1"
-                                                    CornerRadius="8"
-                                                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                                    BorderThickness="1"
-                                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                                    Visibility="{Binding HasContextSummary, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <ToolTipService.ToolTip>
-                                                        <ToolTip>
-                                                            <TextBlock
-                                                                MaxWidth="280"
-                                                                TextWrapping="Wrap"
-                                                                Text="{Binding ContextSummary}" />
-                                                        </ToolTip>
-                                                    </ToolTipService.ToolTip>
-                                                    <FontIcon
-                                                        Glyph="&#xE946;"
-                                                        FontSize="10"
-                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                </Border>
-                                                <ItemsControl
-                                                    ItemsSource="{Binding SensitiveContextItems}"
-                                                    Visibility="{Binding HasSensitiveContext, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate>
-                                                            <ItemsWrapGrid Orientation="Horizontal" />
-                                                        </ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate x:DataType="viewModels1:ContextItemViewModel">
-                                                            <Border
-                                                                Margin="0,0,4,4"
-                                                                Padding="4,1"
-                                                                CornerRadius="8"
-                                                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                                                BorderThickness="1">
-                                                                <StackPanel Orientation="Horizontal" Spacing="2">
-                                                                    <TextBlock
-                                                                        FontSize="12"
-                                                                        Text="{x:Bind Label}" />
-                                                                    <Button
-                                                                        Padding="0"
-                                                                        MinWidth="0"
-                                                                        MinHeight="0"
-                                                                        BorderThickness="0"
-                                                                        Background="Transparent"
-                                                                        Click="OnRemoveContextClicked">
-                                                                        <FontIcon
-                                                                            Glyph="&#xE711;"
-                                                                            FontSize="8"
-                                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                                                    </Button>
-                                                                </StackPanel>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </ItemsControl.Items>
                                         </ItemsControl>
                                         <StackPanel
                                             Orientation="Horizontal"

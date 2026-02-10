@@ -1491,18 +1491,29 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
     {
         this._viewModel.ContextItems.Clear();
         this._viewModel.SensitiveContextItems.Clear();
+        this._viewModel.ContextPills.Clear();
         var summaryParts = new List<string>();
+        var sensitivePills = new List<ContextItemViewModel>();
+        string? appDisplayLabel = null;
         foreach (var item in this._contextItems)
         {
             var preview = BuildContextPreview(item.Content);
+            var iconGlyph = ResolveContextIconGlyph(item.Label);
+            var displayLabel = ResolveContextDisplayLabel(item.Label, preview);
+            if (!string.IsNullOrWhiteSpace(displayLabel))
+            {
+                appDisplayLabel = displayLabel;
+            }
             if (!string.IsNullOrWhiteSpace(preview))
             {
-                this._viewModel.ContextItems.Add(new ContextItemViewModel(item.Label, preview));
+                this._viewModel.ContextItems.Add(new ContextItemViewModel(item.Label, preview, iconGlyph, displayLabel));
             }
 
             if (IsSensitiveContextLabel(item.Label))
             {
-                this._viewModel.SensitiveContextItems.Add(new ContextItemViewModel(item.Label, item.Content));
+                var sensitiveItem = new ContextItemViewModel(item.Label, item.Content, iconGlyph, displayLabel);
+                this._viewModel.SensitiveContextItems.Add(sensitiveItem);
+                sensitivePills.Add(sensitiveItem);
                 continue;
             }
 
@@ -1516,6 +1527,53 @@ internal sealed partial class StickyNoteWindow : WindowEx, IDisposable
         this._viewModel.ContextSummary = summaryParts.Count > 0
             ? string.Join(" | ", summaryParts)
             : string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(this._viewModel.ContextSummary))
+        {
+            var summaryGlyph = !string.IsNullOrWhiteSpace(appDisplayLabel) ? "\uE737" : "\uE946";
+            this._viewModel.ContextPills.Add(new ContextItemViewModel(string.Empty, this._viewModel.ContextSummary, summaryGlyph, appDisplayLabel));
+        }
+
+        foreach (var item in sensitivePills)
+        {
+            this._viewModel.ContextPills.Add(item);
+        }
+    }
+
+    private static string? ResolveContextIconGlyph(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return null;
+        }
+
+        var normalized = label.Trim();
+        if (string.Equals(normalized, "App", StringComparison.OrdinalIgnoreCase))
+        {
+            return "\uE737";
+        }
+
+        if (string.Equals(normalized, "Explorer folder", StringComparison.OrdinalIgnoreCase))
+        {
+            return "\uE8B7";
+        }
+
+        if (string.Equals(normalized, "Selected files", StringComparison.OrdinalIgnoreCase))
+        {
+            return "\uE8C8";
+        }
+
+        return null;
+    }
+
+    private static string? ResolveContextDisplayLabel(string label, string preview)
+    {
+        if (string.IsNullOrWhiteSpace(label) || string.IsNullOrWhiteSpace(preview))
+        {
+            return null;
+        }
+
+        return string.Equals(label, "App", StringComparison.OrdinalIgnoreCase) ? preview : null;
     }
 
     private static void RemoveContextItemsByLabel(List<ChatContextItem> items, string label)
